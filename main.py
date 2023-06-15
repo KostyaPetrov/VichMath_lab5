@@ -1,6 +1,7 @@
 import math
 import os
 import matplotlib.pyplot as plt
+import numpy
 
 
 def main():
@@ -22,19 +23,32 @@ def main():
 
     lagrange(list_x, list_y, point)
 
-    gauss(list_x, list_y, int(len(list_x)), point)
+    data=gauss(list_x, list_y, int(len(list_x)), point)
 
-    drow_data(list_x, list_y)
+    drow_data(list_x, list_y,data)
 
-def drow_data(x, y):
+def drow_data(x, y, d):
     plt.scatter(x,y, label='Исходные данные')
     plt.xlabel('X')
     plt.ylabel('Y')
     plt.grid()
     plt.title('Функции интерпрояции')
     plt.plot(x,y, label='Заданая функция')
+    # plt.plot(d, label='Функция Гаусса')
+    x_graph=numpy.linspace(min(x), max(x), 1000)
+    y_graph_gauss = []
+    y_graph_lagrange = []
+    for i in range(0, 1000):
+        y_graph_gauss.append(gauss(x,y,int(len(x)),x_graph[i],False))
+        y_graph_lagrange.append(lagrange(x,y,x_graph[i],False))
+    plt.plot(x_graph, y_graph_gauss, label='Гаусс')
+    plt.plot(x_graph, y_graph_lagrange, label='Лагранж')
 
-def lagrange(x, y, point):
+
+    plt.legend()
+    plt.show()
+
+def lagrange(x, y, point, show=True):
     result = 0
 
     n=int(len(x))
@@ -48,11 +62,15 @@ def lagrange(x, y, point):
         numerator*=y[i]
         result+=(numerator/denominator)
 
-    print("Лагранж:")
-    print(result)
+    if show==True:
+        print("Лагранж:")
+        print(result)
+    else:
+        return result
 
-def gauss(x, y, n, point):
-    print("Гаусс:")
+def gauss(x, y, n, point, show=True):
+    if show==True:
+        print("Гаусс:")
     check_points, hope = equally_spaced(x)
     if len(x)%2 == 0:
         print("Количество точек должно быть нечетным")
@@ -66,14 +84,22 @@ def gauss(x, y, n, point):
         t = round((point - a) / hope,2)
 
         if point > a:
-            x_more_a(x, y, n, t)
+            data_graph=x_more_a(x, y, n, t, show)
+            if show==False:
+                return data_graph
         elif point < a:
-            x_less_a(x, y, n, t)
+            data_graph=x_less_a(x, y, n, t, show)
+            if show==False:
+                return data_graph
         else:
-            print("Результат интерполяции методом Гаусса равен", y[center])
+            if show==True:
+                print("Результат интерполяции методом Гаусса равен", y[center])
+            else:
+                return y[center]
 
 
-def find_finite_differences(x,y,n):
+
+def find_finite_differences(x,y,n, show):
     finite_differences = []
     for i in range(0, len(x)):
         finite_differences.append(x[i])
@@ -87,31 +113,31 @@ def find_finite_differences(x,y,n):
             delt_y= a - b
             finite_differences.append(delt_y)
         k=k-1
-
-    print("| i | x | y | Δy ", end="|")
-    for i in range(2, n):
-        print(" Δy ^ ", i, " ", end="|")
-    print()
-
-    for i in range(0, n):
-        print(" ",i, end="  ")
-        k=n
-
-
-        print(finite_differences[i],end="   ")
-        print(finite_differences[n + i], end="   ")
-        h = n + i + k
-        for j in range(n-i-1, 0, -1):
-
-            print(finite_differences[h],end="   ")
-            k=k-1
-            h+=k
+    if show==True:
+        print("| i | x | y | Δy ", end="|")
+        for i in range(2, n):
+            print(" Δy ^ ", i, " ", end="|")
         print()
+
+        for i in range(0, n):
+            print(" ",i, end="  ")
+            k=n
+
+
+            print(finite_differences[i],end="   ")
+            print(finite_differences[n + i], end="   ")
+            h = n + i + k
+            for j in range(n-i-1, 0, -1):
+
+                print(finite_differences[h],end="   ")
+                k=k-1
+                h+=k
+            print()
 
     return finite_differences
 
-def x_more_a(x, y, n, t):
-    table=find_finite_differences(x,y,n)
+def x_more_a(x, y, n, t,show):
+    table=find_finite_differences(x,y,n,show)
     result=table[n+(n-1)//2]
     numerator=1
     h=int((n-5)/2)
@@ -132,12 +158,15 @@ def x_more_a(x, y, n, t):
         else:
             result += (numerator * table[start_position_second]) / math.factorial(2 * i)
 
+    if show==True:
+        print("Результат интерполяции методом Гаусса равен", result)
+    else:
+        return result
 
 
-    print("Результат интерполяции методом Гаусса равен", result)
 
-def x_less_a(x, y, n, t):
-    table = find_finite_differences(x, y, n)
+def x_less_a(x, y, n, t, show):
+    table = find_finite_differences(x, y, n, show)
     result = table[n + (n - 1) // 2]
     # print("t=",t)
     # print("y0=",result)
@@ -174,9 +203,10 @@ def x_less_a(x, y, n, t):
             result += (numerator * table[start_position_second]) / math.factorial(2 * i)
             # print("d2y0-1=", table[start_position_second])
             # print("fact=",math.factorial(2 * i))
-    print("Результат интерполяции методом Гаусса равен", result)
-
-
+    if show==True:
+        print("Результат интерполяции методом Гаусса равен", result)
+    else:
+        return result
 
 
 def equally_spaced(x):
